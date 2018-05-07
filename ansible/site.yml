@@ -1,0 +1,166 @@
+---
+# NOTE(awiddersheim): Gather facts for all hosts as a
+# first step since several plays below require them when
+# building their configurations. The below 'gather_facts'
+# set to 'false' is a bit confusing but this is to avoid
+# Ansible gathering facts twice.
+- name: Gather facts for all hosts
+  hosts: all
+  serial: '{{ serial|default("0") }}'
+  gather_facts: false
+  tasks:
+    - setup:
+  tags: always
+
+# NOTE(pbourke): This case covers deploying subsets of hosts using --limit. The
+# limit arg will cause the first play to gather facts only about that node,
+# meaning facts such as IP addresses for rabbitmq nodes etc. will be undefined
+# in the case of adding a single compute node.
+# We don't want to add the delegate parameters to the above play as it will
+# result in ((num_nodes-1)^2) number of SSHs when running for all nodes
+# which can be very inefficient.
+- name: Gather facts for all hosts (if using --limit)
+  hosts: all
+  serial: '{{ serial|default("0") }}'
+  gather_facts: false
+  tasks:
+    - setup:
+      delegate_facts: True
+      delegate_to: "{{ item }}"
+      with_items: "{{ groups['all'] }}"
+      when:
+        - (ansible_play_batch | length) != (groups['all'] | length)
+
+- name: Detect openstack_release variable
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Get current kolla-ansible version number
+      #local_action: command python -c "import pbr.version; print(pbr.version.VersionInfo('kolla-ansible'))"
+      local_action: command python -c "print('6.0.0')"
+      register: kolla_ansible_version
+      changed_when: false
+      when: openstack_release == "auto"
+
+    - name: Set openstack_release variable
+      set_fact:
+        openstack_release: "{{ kolla_ansible_version.stdout }}"
+      when: openstack_release == "auto"
+  tags: always
+
+- name: Apply role prechecks
+  gather_facts: false
+  hosts:
+    - all
+  roles:
+    - role: prechecks
+      when: action == "precheck"
+
+- name: Apply role collectd
+  gather_facts: false
+  hosts: collectd
+  serial: '{{ serial|default("0") }}'
+  roles:
+    - { role: collectd,
+        tags: collectd,
+        when: enable_collectd | bool }
+
+- name: Apply role redis
+  gather_facts: false
+  hosts:
+    - redis
+  serial: '{{ serial|default("0") }}'
+  roles:
+    - { role: redis,
+        tags: redis,
+        when: enable_redis | bool }
+
+- name: Apply role haproxy
+  gather_facts: false
+  hosts:
+    - haproxy
+  roles:
+    - { role: haproxy,
+        tags: haproxy,
+        when: enable_haproxy | bool }
+
+- name: Apply role memcached
+  gather_facts: false
+  hosts: memcached
+  serial: '{{ serial|default("0") }}'
+  roles:
+    - { role: memcached,
+        tags: [memcache, memcached],
+        when: enable_memcached | bool }
+
+- name: Apply role mariadb
+  gather_facts: false
+  hosts: mariadb
+  roles:
+    - { role: mariadb,
+        tags: mariadb,
+        when: enable_mariadb | bool }
+
+- name: Apply role rabbitmq
+  gather_facts: false
+  hosts: rabbitmq
+  roles:
+    - { role: rabbitmq,
+        tags: rabbitmq,
+        role_rabbitmq_cluster_cookie: '{{ rabbitmq_cluster_cookie }}',
+        role_rabbitmq_cluster_port: '{{ rabbitmq_cluster_port }}',
+        role_rabbitmq_epmd_port: '{{ rabbitmq_epmd_port }}',
+        role_rabbitmq_groups: rabbitmq,
+        role_rabbitmq_management_port: '{{ rabbitmq_management_port }}',
+        role_rabbitmq_password: '{{ rabbitmq_password }}',
+        role_rabbitmq_port: '{{ rabbitmq_port }}',
+        role_rabbitmq_user: '{{ rabbitmq_user }}',
+        when: enable_rabbitmq | bool }
+
+- name: Apply role keystone
+  gather_facts: false
+  hosts: keystone
+  serial: '{{ serial|default("0") }}'
+  roles:
+    - { role: keystone,
+        tags: keystone,
+        when: enable_keystone | bool }
+
+- name: Apply role glance
+  gather_facts: false
+  hosts:
+    - ceph-mon
+    - glance-api
+    - glance-registry
+  serial: '{{ serial|default("0") }}'
+  roles:
+    - { role: glance,
+        tags: glance,
+        when: enable_glance | bool }
+
+- name: Apply role nova
+  gather_facts: false
+  hosts:
+    - compute
+    - nova-api
+    - nova-conductor
+    - nova-scheduler
+  serial: '{{ serial|default("0") }}'
+  roles:
+    - { role: nova,
+        tags: nova,
+        when: enable_nova | bool }
+
+
+- name: Apply role neutron
+  gather_facts: false
+  hosts:
+    - neutron-server
+    - neutron-zvm-agent
+    - compute
+  serial: '{{ serial|default("0") }}'
+  roles:
+    - { role: neutron,
+        tags: neutron,
+        when: enable_neutron | bool }
+

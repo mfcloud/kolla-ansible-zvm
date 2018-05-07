@@ -1,0 +1,25 @@
+- hosts: local
+  connection: local
+  become: yes
+  become_user: root
+  tasks:
+   - name: Install Nginx
+     apt:
+       name: wget
+       state: installed
+       update_cache: true
+     notify:
+      - Start iscsid
+   - name: copy file
+     file:
+      path: {{ ansible_processor_cores }}
+      mode: 775
+      state: directory
+      owner: jichen
+      group: jichen
+
+  handlers:
+   - name: Start iscsid
+     service:
+       name: iscsid 
+       state: stoped
