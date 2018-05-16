@@ -84,10 +84,12 @@ nova_services:
       - "/run:/run:shared"
       - "/dev:/dev"
       - "kolla_logs:/var/log/kolla/"
-      - "{% if enable_iscsid | bool %}iscsi_info:/etc/iscsi{% endif %}"
       - "libvirtd:/var/lib/libvirt"
       - "nova_compute:/var/lib/nova/"
-      - "{% if enable_cinder_backend_nfs | bool %}/var/lib/nova/mnt:/var/lib/nova/mnt:shared{% endif %}"
+      - "/etc/zvmsdk:/etc/zvmsdk:ro"
+      - "/var/lib/nova/images:/var/lib/nova/images"
+      - "/var/lib/nova/instances:/var/lib/nova/instances"
+      - "/zvm:/var/lib/kolla/venv/local/lib/python2.7/site-packages/nova/virt/zvm:ro"
 
 ####################
 # Ceph

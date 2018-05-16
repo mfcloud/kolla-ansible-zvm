@@ -24,7 +24,7 @@ neutron_services:
       - "/lib/modules:/lib/modules:ro"
       - "/run:/run:shared"
       - "kolla_logs:/var/log/kolla/"
-
+      - "/etc/zvmsdk:/etc/zvmsdk:ro"
 
 
 placement_keystone_user: "placement"
@@ -77,18 +77,6 @@ neutron_server_image_full: "{{ neutron_server_image }}:{{ neutron_server_tag }}"
 neutron_zvm_agent_image: "{{ docker_registry ~ '/' if docker_registry else '' }}{{ docker_namespace }}/{{ kolla_base_distro }}-{{ neutron_install_type }}-neutron-zvm-agent{{ '-opendaylight' if enable_opendaylight | bool else '' }}"
 neutron_zvm_agent_tag: "{{ neutron_tag }}"
 neutron_zvm_agent_image_full: "{{ neutron_zvm_agent_image }}:{{ neutron_zvm_agent_tag }}"
-
-neutron_vpnaas_agent_image: "{{ docker_registry ~ '/' if docker_registry else '' }}{{ docker_namespace }}/{{ kolla_base_distro }}-{{ neutron_install_type }}-neutron-vpnaas-agent"
-neutron_vpnaas_agent_tag: "{{ neutron_tag }}"
-neutron_vpnaas_agent_image_full: "{{ neutron_vpnaas_agent_image }}:{{ neutron_vpnaas_agent_tag }}"
-
-neutron_bgp_dragent_image: "{{ docker_registry ~ '/' if docker_registry else '' }}{{ docker_namespace }}/{{ kolla_base_distro }}-{{ neutron_install_type }}-neutron-bgp-dragent"
-neutron_bgp_dragent_tag: "{{ neutron_tag }}"
-neutron_bgp_dragent_image_full: "{{ neutron_bgp_dragent_image }}:{{ neutron_bgp_dragent_tag }}"
-
-neutron_infoblox_ipam_agent_image: "{{ docker_registry ~ '/' if docker_registry else '' }}{{ docker_namespace }}/{{ kolla_base_distro }}-{{ neutron_install_type }}-neutron-infoblox-ipam-agent"
-neutron_infoblox_ipam_agent_tag: "{{ neutron_tag }}"
-neutron_infoblox_ipam_agent_image_full: "{{ neutron_infoblox_ipam_agent_image }}:{{ neutron_infoblox_ipam_agent_tag }}"
 
 ####################
 # OpenStack
