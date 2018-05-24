@@ -44,4 +44,3 @@
   delegate_to: "{{ groups['nova-api'][0] }}"
 
 - include: bootstrap_service.yml
-  when: database.changed
